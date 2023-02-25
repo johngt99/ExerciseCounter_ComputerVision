@@ -1,0 +1,79 @@
+WindowManager:
+    MainPage: # call class from python file
+    SecondWindow: # call class from python file
+    ThirdWindow: # call class from python file
+
+<MainPage>:
+    name: "main" # define the name as it will be called later
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+
+        Label:
+            text: "Main Page"
+            font_size: 32
+
+        Button:
+            text: "Second Screen"
+            font_size: 32
+            on_release: 
+                app.root.current = "second" # move to  this page when button clicked
+                root.manager.transition.direction = "left" #direction of the window slide
+        
+        Button:
+            text: "Third Screen"
+            font_size: 32
+            on_release: 
+                app.root.current = "third" # move to  this page when button clicked
+                root.manager.transition.direction = "up" # direction of the window slide
+
+<SecondWindow>:
+    name: "second" # define the name as it will be called later
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+
+        Label:
+            text: "Second Screen"
+            font_size: 32
+
+        Button:
+            text: "Main Page"
+            font_size: 32
+            on_release: 
+                app.root.current = "main" # move to  this page when button clicked
+                root.manager.transition.direction = "right" # direction of the window slide
+        
+        Button:
+            text: "Third Screen"
+            font_size: 32
+            on_release: 
+                app.root.current = "third" # move to  this page when button clicked
+                root.manager.transition.direction = "down" # direction of the window slide
+
+<ThirdWindow>:
+    name: "third" # define the name as it will be called later
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+
+        Label:
+            text: "Third Screen"
+            font_size: 32
+
+        Button:
+            text: "Main Page"
+            font_size: 32
+            on_release: 
+                app.root.current = "main" # move to  this page when button clicked
+                root.manager.transition.direction = "right" # direction of the window slide
+        
+        Button:
+            text: "Second Screen"
+            font_size: 32
+            on_release: 
+                app.root.current = "second" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
