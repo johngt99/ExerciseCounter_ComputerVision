@@ -2,6 +2,7 @@ WindowManager:
     MainPage: # call class from python file
     SecondWindow: # call class from python file
     ThirdWindow: # call class from python file
+    FourthWindow: 
 
 <MainPage>:
     name: "main" # define the name as it will be called later
@@ -13,20 +14,38 @@ WindowManager:
         Label:
             text: "Main Page"
             font_size: 32
+        
+    
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.width, root.height
 
         Button:
-            text: "Second Screen"
-            font_size: 32
+            text: "Push Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (0,0,1,1)
             on_release: 
                 app.root.current = "second" # move to  this page when button clicked
                 root.manager.transition.direction = "left" #direction of the window slide
         
         Button:
-            text: "Third Screen"
-            font_size: 32
+            text: "Squats"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (1,0,0,1)
             on_release: 
                 app.root.current = "third" # move to  this page when button clicked
-                root.manager.transition.direction = "up" # direction of the window slide
+                root.manager.transition.direction = "left" # direction of the window slide
+
+        Button:
+            text: "Sit Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (0,1,1,1)
+            on_release: 
+                app.root.current = "fourth" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
 
 <SecondWindow>:
     name: "second" # define the name as it will be called later
@@ -36,22 +55,38 @@ WindowManager:
         size: root.width, root.height
 
         Label:
-            text: "Second Screen"
+            text: "Push Ups"
             font_size: 32
+
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.width, root.height
 
         Button:
             text: "Main Page"
-            font_size: 32
+            size_hint: (0.200, 0.125)
+            font_size: 15
             on_release: 
                 app.root.current = "main" # move to  this page when button clicked
                 root.manager.transition.direction = "right" # direction of the window slide
         
         Button:
-            text: "Third Screen"
-            font_size: 32
+            text: "Squats"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (1,0,0,1)
             on_release: 
                 app.root.current = "third" # move to  this page when button clicked
-                root.manager.transition.direction = "down" # direction of the window slide
+                root.manager.transition.direction = "left" # direction of the window slide
+        
+        Button:
+            text: "Sit Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (0,1,1,1)
+            on_release: 
+                app.root.current = "fourth" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
 
 <ThirdWindow>:
     name: "third" # define the name as it will be called later
@@ -61,19 +96,76 @@ WindowManager:
         size: root.width, root.height
 
         Label:
-            text: "Third Screen"
+            text: "Squats"
             font_size: 32
+
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.width, root.height
 
         Button:
             text: "Main Page"
-            font_size: 32
+            size_hint: (0.200, 0.125)
+            font_size: 15
             on_release: 
                 app.root.current = "main" # move to  this page when button clicked
                 root.manager.transition.direction = "right" # direction of the window slide
         
         Button:
-            text: "Second Screen"
-            font_size: 32
+            text: "Push Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15            
+            background_color: (0,0,1,1)
             on_release: 
                 app.root.current = "second" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
+
+        Button:
+            text: "Sit Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (0,1,1,1)
+            on_release: 
+                app.root.current = "fourth" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
+
+<FourthWindow>:
+    name: "fourth" # define the name as it will be called later
+
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+
+        Label:
+            text: "Sit Ups"
+            font_size: 32
+    
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.width, root.height
+
+        Button:
+            text: "Main Page"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            on_release: 
+                app.root.current = "main" # move to  this page when button clicked
+                root.manager.transition.direction = "right" # direction of the window slide
+        
+        Button:
+            text: "Push Ups"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (0,0,1,1)
+            on_release: 
+                app.root.current = "second" # move to  this page when button clicked
+                root.manager.transition.direction = "left" # direction of the window slide
+
+        Button:
+            text: "Squats"
+            size_hint: (0.200, 0.125)
+            font_size: 15
+            background_color: (1,0,0,1)
+            on_release: 
+                app.root.current = "third" # move to  this page when button clicked
                 root.manager.transition.direction = "left" # direction of the window slide
