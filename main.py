@@ -13,6 +13,9 @@ class SecondWindow(Screen):
 class ThirdWindow(Screen):
     pass
 
+class FourthWindow(Screen):
+    pass
+
 class WindowManager(ScreenManager):
     pass
 
@@ -25,4 +28,5 @@ class AwesomeApp(App):
     
 if __name__ == '__main__':
     AwesomeApp().run()
+
 
