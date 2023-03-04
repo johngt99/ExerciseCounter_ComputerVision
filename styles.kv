@@ -88,12 +88,13 @@
 
 <PageTwo>:
     name: 'page_two'
-    MDScreen:
-        md_bg_color: app.theme_cls.bg_dark       
-        MDLabel:
-            text: 'Page 2'
-            halign: 'center'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Camera"
+        Image:
+            id: image
+            size_hint_y: 0.8
         MDFloatingActionButton:
             icon: "arrow-left"
             pos_hint: {'center_x': 0.5, 'center_y': 0.1}
