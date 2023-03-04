@@ -1,171 +1,118 @@
-WindowManager:
-    MainPage: # call class from python file
-    SecondWindow: # call class from python file
-    ThirdWindow: # call class from python file
-    FourthWindow: 
+#:kivy 2.1.0
+<ScreenManagement>: # Initialize all the pages
+    MainPage:
+    PageOne:
+    PageTwo:
+    PageThree:
+    Result:
 
-<MainPage>:
-    name: "main" # define the name as it will be called later
-
-    BoxLayout:
-        orientation: "vertical"
-        size: root.width, root.height
-
-        Label:
-            text: "Main Page"
-            font_size: 32
-        
-    
-    BoxLayout:
-        orientation: "horizontal"
-        size: root.width, root.height
-
-        Button:
-            text: "Push Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (0,0,1,1)
-            on_release: 
-                app.root.current = "second" # move to  this page when button clicked
-                root.manager.transition.direction = "left" #direction of the window slide
-        
-        Button:
-            text: "Squats"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (1,0,0,1)
-            on_release: 
-                app.root.current = "third" # move to  this page when button clicked
+<MainPage>: # Initial Page
+    name: 'main'
+    MDScreen:
+        md_bg_color: app.theme_cls.bg_dark
+        MDLabel:
+            text: 'Main Page'
+            halign: 'center'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        MDRectangleFlatButton:
+            text: 'Page 1'
+            pos_hint: {'center_x': 0.2, 'center_y': 0.08} # Button1 position
+            on_press: 
+                root.manager.current = 'page_one'
+                root.manager.transition.direction = "left" # direction of the window slide
+        MDRectangleFlatButton:
+            text: 'Page 2'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.08} # Button2 position
+            on_press: 
+                root.manager.current = 'page_two'
+                root.manager.transition.direction = "left" # direction of the window slide
+        MDRectangleFlatButton:
+            text: 'Page 3'
+            pos_hint: {'center_x': 0.8, 'center_y': 0.08} # Button3 position
+            on_press: 
+                root.manager.current = 'page_three'
                 root.manager.transition.direction = "left" # direction of the window slide
 
-        Button:
-            text: "Sit Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (0,1,1,1)
-            on_release: 
-                app.root.current = "fourth" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
 
-<SecondWindow>:
-    name: "second" # define the name as it will be called later
+<PageOne>:
+    name: 'page_one'
+    num_one: num_one
+    num_two: num_two
+    MDScreen:
+        md_bg_color: app.theme_cls.bg_dark
+        MDLabel:
+            text: 'Enter two numbers to multiply:'
+            halign: 'center'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.8}
+        MDTextField:
+            id: num_one
+            hint_text: 'Number 1'
+            helper_text_mode: 'on_focus'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
+            size_hint_x: None
+            width: 200
+        MDTextField:
+            id: num_two
+            hint_text: 'Number 2'
+            helper_text_mode: 'on_focus'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            size_hint_x: None
+            width: 200
+        MDRectangleFlatButton:
+            text: 'Calculate'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
+            on_press: root.calculate()            
 
-    BoxLayout:
-        orientation: "vertical"
-        size: root.width, root.height
-
-        Label:
-            text: "Push Ups"
-            font_size: 32
-
-    BoxLayout:
-        orientation: "horizontal"
-        size: root.width, root.height
-
-        Button:
-            text: "Main Page"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            on_release: 
-                app.root.current = "main" # move to  this page when button clicked
+        MDFloatingActionButton:
+            icon: "arrow-left"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            on_release:
+                app.root.current = 'main'
                 root.manager.transition.direction = "right" # direction of the window slide
-        
-        Button:
-            text: "Squats"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (1,0,0,1)
-            on_release: 
-                app.root.current = "third" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
-        
-        Button:
-            text: "Sit Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (0,1,1,1)
-            on_release: 
-                app.root.current = "fourth" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
-
-<ThirdWindow>:
-    name: "third" # define the name as it will be called later
-
-    BoxLayout:
-        orientation: "vertical"
-        size: root.width, root.height
-
-        Label:
-            text: "Squats"
-            font_size: 32
-
-    BoxLayout:
-        orientation: "horizontal"
-        size: root.width, root.height
-
-        Button:
-            text: "Main Page"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            on_release: 
-                app.root.current = "main" # move to  this page when button clicked
+<Result>:
+    name: 'result'
+    result_label: result_label
+    MDScreen:
+        md_bg_color: app.theme_cls.bg_dark
+        MDLabel:
+            id: result_label
+            halign: 'center'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        MDFloatingActionButton:
+            icon: "arrow-left"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            on_release:
+                app.root.current = 'main'
                 root.manager.transition.direction = "right" # direction of the window slide
-        
-        Button:
-            text: "Push Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15            
-            background_color: (0,0,1,1)
-            on_release: 
-                app.root.current = "second" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
 
-        Button:
-            text: "Sit Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (0,1,1,1)
-            on_release: 
-                app.root.current = "fourth" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
 
-<FourthWindow>:
-    name: "fourth" # define the name as it will be called later
-
-    BoxLayout:
-        orientation: "vertical"
-        size: root.width, root.height
-
-        Label:
-            text: "Sit Ups"
-            font_size: 32
-    
-    BoxLayout:
-        orientation: "horizontal"
-        size: root.width, root.height
-
-        Button:
-            text: "Main Page"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            on_release: 
-                app.root.current = "main" # move to  this page when button clicked
+<PageTwo>:
+    name: 'page_two'
+    MDScreen:
+        md_bg_color: app.theme_cls.bg_dark       
+        MDLabel:
+            text: 'Page 2'
+            halign: 'center'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        MDFloatingActionButton:
+            icon: "arrow-left"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            on_release:
+                app.root.current = 'main'
                 root.manager.transition.direction = "right" # direction of the window slide
-        
-        Button:
-            text: "Push Ups"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (0,0,1,1)
-            on_release: 
-                app.root.current = "second" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
 
-        Button:
-            text: "Squats"
-            size_hint: (0.200, 0.125)
-            font_size: 15
-            background_color: (1,0,0,1)
-            on_release: 
-                app.root.current = "third" # move to  this page when button clicked
-                root.manager.transition.direction = "left" # direction of the window slide
+
+<PageThree>:
+    name: 'page_three'
+    MDScreen:
+        md_bg_color: app.theme_cls.bg_dark
+        MDLabel:
+            text: 'Page 3'
+            halign: 'center'
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        MDFloatingActionButton:
+            icon: "arrow-left"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            on_release:
+                app.root.current = 'main'
+                root.manager.transition.direction = "right" # direction of the window slide
