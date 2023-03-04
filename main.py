@@ -47,6 +47,7 @@ class PageTwo(Screen):  # Page 2
 
     def update(self, dt):
         ret, frame = self.capture.read()
+        frame = cv2.flip(frame,1) # Mirror the image so it looks correct
         if ret:
             results = self.mp_hands.process(frame)
             if results.multi_hand_landmarks:
