@@ -10,7 +10,7 @@ from kivy.core.window import Window
 
 Window.size = (400,700) # size of the window
 
-Builder.load_file('main.kv') # gets display styles from main.kv file
+Builder.load_file('styles.kv') # gets display styles from main.kv file
 
 
 class MainPage(Screen): # Initial Screen
