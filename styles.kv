@@ -105,15 +105,23 @@
 
 <PageThree>:
     name: 'page_three'
-    MDScreen:
-        md_bg_color: app.theme_cls.bg_dark
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Camera"
         MDLabel:
-            text: 'Page 3'
-            halign: 'center'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            id: squat_label
+            text: "Squat count: 0"
+            size_hint_y: 0.1
+            font_size: "30sp"
+        Image:
+            id: image
+            size_hint_y: 0.8
         MDFloatingActionButton:
             icon: "arrow-left"
             pos_hint: {'center_x': 0.5, 'center_y': 0.1}
             on_release:
                 app.root.current = 'main'
                 root.manager.transition.direction = "right" # direction of the window slide
+
+
