@@ -14,7 +14,7 @@ from kivy.graphics.texture import Texture
 
 Window.size = (400,700) # size of the window
 
-Builder.load_file('main.kv') # gets display styles from main.kv file
+Builder.load_file('styles.kv') # gets display styles from main.kv file
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
