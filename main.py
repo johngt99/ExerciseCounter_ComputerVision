@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import numpy as np
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.screenmanager import Screen, ScreenManager
@@ -12,141 +13,362 @@ from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.graphics.texture import Texture
 
-Window.size = (400,700) # size of the window
+Window.size = (400, 700)  # phone size
 
-Builder.load_file('styles.kv') # gets display styles from main.kv file
+Builder.load_file('styles.kv')  # gets display styles from styles.kv file
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
-class MainPage(Screen): # Initial Screen
+
+class MainPage(Screen):  # Initial Screen
     pass
 
 
-class PageOne(Screen): # Page 1 
-    num_one = ObjectProperty(None)
-    num_two = ObjectProperty(None)
-
-    def calculate(self):
-        result = int(self.num_one.text) * int(self.num_two.text)
-        self.parent.get_screen('result').ids.result_label.text = str(result)
-        self.parent.current = 'result'
-
-class Result(Screen): # Screen to show result of Page 1 action
-    result_label = ObjectProperty(None)
-    
-class PageTwo(Screen):  # Page 2
+class PageOne(Screen):  # Page 1
     def on_enter(self):
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+
+        self.texture = Texture.create(size=(640, 480))
+        # self.texture.flip_vertical()
+
         self.capture = cv2.VideoCapture(0)
-        self.mp_hands = mp.solutions.hands.Hands()
-        Clock.schedule_interval(self.update, 1.0/30.0)
+
+        Clock.schedule_interval(self.update, 1.0/60.0)
+
+        self.counter = 0
+        self.rep = [0, 0]
+        self.position = ""
 
     def on_leave(self):
+        Clock.unschedule(self.update)
         self.capture.release()
-        self.mp_hands.close()
+
+    def calculate_angle(a, b, c):
+        a = np.array(a)  # first
+        b = np.array(b)  # middle
+        c = np.array(c)  # end
+        ba = a-b
+        bc = c-b
+
+        cosine_angle = np.dot(ba, bc) / \
+            (np.linalg.norm(ba) * np.linalg.norm(bc))
+        angle = np.arccos(cosine_angle)
+
+        if angle > 180.0:  # ajust angle according to the size arm is facing
+            angle = 360-angle
+
+        return np.degrees(angle)
 
     def update(self, dt):
-        ret, frame = self.capture.read()
-        frame = cv2.flip(frame,1) # Mirror the image so it looks correct
-        if ret:
-            results = self.mp_hands.process(frame)
-            if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
-                    for landmark in hand_landmarks.landmark:
-                        print(landmark)
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+            success, frame = self.capture.read()
+            # flip camera to right position
+            frame = cv2.flip(frame, 0, dst=None)
+            # flip camera to right position
+            frame = cv2.flip(frame, 1, dst=None)
 
-            # convert frame to texture
-            buf = cv2.flip(frame, 0).tostring()
-            texture = Texture.create(
-                size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
-            texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-            self.ids.image.texture = texture
+            # Recolor image to RGB
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image.flags.writeable = False
+
+            # Make Detection
+            results = pose.process(image)
+
+            # Recolor back to BGR
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+            try:
+                self.landmarks = results.pose_landmarks.landmark
+                # get landmarks for arms
+                #  RIGHT ARM
+                right_shoulder = [self.landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
+                                  self.landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+                right_elbow = [self.landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
+                               self.landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
+                right_wrist = [self.landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
+                               self.landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
+                right_arm_angle = self.calculate_angle(
+                    right_shoulder, right_elbow, right_wrist)  # CALCULATES ANGLE / RIGHT ARM
+
+                #  LEFT ARM
+                left_shoulder = [self.landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x,
+                                 self.landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y]
+                left_elbow = [self.landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].x,
+                              self.landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].y]
+                left_wrist = [self.landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].x,
+                              self.landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].y]
+                left_arm_angle = self.calculate_angle(
+                    left_shoulder, left_elbow, left_wrist)
+
+                # check if person is in squat position
+                if left_arm_angle < 90 and right_arm_angle < 90:
+                    self.position = "DOWN"
+
+                if left_arm_angle > 135 and right_arm_angle > 135:
+                    self.position = "UP"
+
+                # ["DOWN", "UP"] = 1 repetition
+                if self.position == 'DOWN':
+                    if self.rep[0] == 0:
+                        self.rep[0] = 'DOWN'
+
+                if self.position == 'UP':
+                    if self.rep == ['DOWN', 0]:
+                        self.counter += 1
+                        print(f"Squat count: {self.counter}")
+                        rep = [0, 0]  # reset repetition
+            except:
+                pass
+            # display landmarks
+            mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,                                      # connection appearance
+                                      mp_drawing.DrawingSpec(
+                                          color=(255, 200, 0), thickness=2, circle_radius=2),
+                                      mp_drawing.DrawingSpec(
+                                          color=(0, 255, 255), thickness=5, circle_radius=2)  # joint appearance
+                                      )
+            if success:
+                # display frame
+                # Update Kivy texture
+                buffer = image.tobytes()
+                self.texture.blit_buffer(
+                    buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.ids.image.texture = self.texture
+
+
+class PageTwo(Screen):  # Page 2
+    def on_enter(self):
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+
+        self.texture = Texture.create(size=(640, 480))
+        # self.texture.flip_vertical()
+
+        self.capture = cv2.VideoCapture(0)
+
+        Clock.schedule_interval(self.update, 1.0/60.0)
+
+        self.counter = 0
+        self.rep = [0, 0]
+        self.position = ""
+
+    def on_leave(self):
+        Clock.unschedule(self.update)
+        self.capture.release()
+
+    def calculate_angle(a, b, c):
+        a = np.array(a)  # first
+        b = np.array(b)  # middle
+        c = np.array(c)  # end
+        ba = a-b
+        bc = c-b
+
+        cosine_angle = np.dot(ba, bc) / \
+            (np.linalg.norm(ba) * np.linalg.norm(bc))
+        angle = np.arccos(cosine_angle)
+
+        if angle > 180.0:  # ajust angle according to the size arm is facing
+            angle = 360-angle
+
+        return np.degrees(angle)
+
+    def update(self, dt):
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+            success, frame = self.capture.read()
+            # flip camera to right position
+            frame = cv2.flip(frame, 0, dst=None)
+            # flip camera to right position
+            frame = cv2.flip(frame, 1, dst=None)
+
+            # Recolor image to RGB
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image.flags.writeable = False
+
+            # Make Detection
+            results = pose.process(image)
+
+            # Recolor back to BGR
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+            try:
+                self.landmarks = results.pose_landmarks.landmark
+                # get landmarks for arms
+                #  RIGHT ARM
+                right_shoulder = [self.landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
+                                  self.landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+                right_hip = [self.landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
+                             self.landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
+                right_knee = [self.landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x,
+                              self.landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
+                right_side_angle = self.calculate_angle(
+                    right_shoulder, right_hip, right_knee)  # CALCULATES ANGLE / RIGHT ARM
+
+                #  LEFT ARM
+                left_shoulder = [self.landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x,
+                                 self.landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y]
+                left_hip = [self.landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x,
+                            self.landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y]
+                left_knee = [self.landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].x,
+                             self.landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].y]
+                left_side_angle = self.calculate_angle(
+                    left_shoulder, left_hip, left_knee)
+
+                # check if person is in squat position
+                if left_side_angle < 75 and right_side_angle < 75:
+                    self.position = "DOWN"
+
+                if left_side_angle > 90 and right_side_angle > 90:
+                    self.position = "UP"
+
+                # ["DOWN", "UP"] = 1 repetition
+                if self.position == 'DOWN':
+                    if self.rep[0] == 0:
+                        self.rep[0] = 'DOWN'
+
+                if self.position == 'UP':
+                    if self.rep == ['DOWN', 0]:
+                        self.counter += 1
+                        print(f"Squat count: {self.counter}")
+                        rep = [0, 0]  # reset repetition
+            except:
+                pass
+            # display landmarks
+            mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,                                      # connection appearance
+                                      mp_drawing.DrawingSpec(
+                                          color=(255, 200, 0), thickness=2, circle_radius=2),
+                                      mp_drawing.DrawingSpec(
+                                          color=(0, 255, 255), thickness=5, circle_radius=2)  # joint appearance
+                                      )
+            if success:
+                # display frame
+                # Update Kivy texture
+                buffer = image.tobytes()
+                self.texture.blit_buffer(
+                    buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.ids.image.texture = self.texture
+
 
 class PageThree(Screen):  # Page 3
     def on_enter(self):
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+
+        self.texture = Texture.create(size=(640, 480))
+        # self.texture.flip_vertical()
+
         self.capture = cv2.VideoCapture(0)
-        self.mp_pose = mp.solutions.pose.Pose()
-        self.mp_holistic = mp.solutions.holistic.Holistic()
-        self.in_squat = False
-        self.squat_count = 0
-        self.prev_l_hip_y = None
-        Clock.schedule_interval(self.update, 1.0/30.0)
+
+        Clock.schedule_interval(self.update, 1.0/60.0)
+
+        self.counter = 0
+        self.rep = [0, 0]
+        self.position = ""
 
     def on_leave(self):
+        Clock.unschedule(self.update)
         self.capture.release()
-        self.mp_pose.close()
-        self.mp_holistic.close()
+
+    def calculate_angle(a, b, c):
+        a = np.array(a)  # first
+        b = np.array(b)  # middle
+        c = np.array(c)  # end
+        ba = a-b
+        bc = c-b
+
+        cosine_angle = np.dot(ba, bc) / \
+            (np.linalg.norm(ba) * np.linalg.norm(bc))
+        angle = np.arccos(cosine_angle)
+
+        if angle > 180.0:  # ajust angle according to the size arm is facing
+            angle = 360-angle
+
+        return np.degrees(angle)
 
     def update(self, dt):
-        ret, frame = self.capture.read()
-        frame = cv2.flip(frame, 0)
-        frame = cv2.flip(frame, 1)
-        if ret:
-            # process pose estimation
-            results_pose = self.mp_pose.process(frame)
-            pose_landmarks = results_pose.pose_landmarks
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+            success, frame = self.capture.read()
+            # flip camera to right position
+            frame = cv2.flip(frame, 0, dst=None)
+            # flip camera to right position
+            frame = cv2.flip(frame, 1, dst=None)
 
-            # process holistic estimation
-            results_holistic = self.mp_holistic.process(frame)
-            holistic_landmarks = results_holistic.pose_landmarks
+            # Recolor image to RGB
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image.flags.writeable = False
 
-            # get landmarks for left hip and left knee
-            if pose_landmarks is not None and holistic_landmarks is not None:
-                l_hip_x = int(
-                    pose_landmarks.landmark[mp.solutions.pose.PoseLandmark.LEFT_HIP].x * frame.shape[1])
-                l_hip_y = int(
-                    pose_landmarks.landmark[mp.solutions.pose.PoseLandmark.LEFT_HIP].y * frame.shape[0])
-                l_knee_x = int(
-                    pose_landmarks.landmark[mp.solutions.pose.PoseLandmark.LEFT_KNEE].x * frame.shape[1])
-                l_knee_y = int(
-                    pose_landmarks.landmark[mp.solutions.pose.PoseLandmark.LEFT_KNEE].y * frame.shape[0])
-                l_hip_z = holistic_landmarks.landmark[mp.solutions.holistic.PoseLandmark.LEFT_HIP].z
-                l_knee_z = holistic_landmarks.landmark[mp.solutions.holistic.PoseLandmark.LEFT_KNEE].z
+            # Make Detection
+            results = pose.process(image)
+
+            # Recolor back to BGR
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+            try:
+                self.landmarks = results.pose_landmarks.landmark
+                # get landmarks for arms
+                #  RIGHT ARM
+                right_hip = [self.landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x, self.landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
+                right_knee = [self.landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x, self.landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
+                right_ankle = [self.landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].x,  self.landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].y]
+                right_leg_angle = self.calculate_angle(
+                    right_hip, right_knee, right_ankle)  # CALCULATES ANGLE / RIGHT ARM
+
+                #  LEFT ARM
+                left_hip = [self.landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x, self.landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y]
+                left_knee = [self.landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].x, self.landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].y]
+                left_ankle = [self.landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value].x, self.landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value].y]
+                left_leg_angle = self.calculate_angle(
+                    left_hip, left_knee, left_ankle)
 
                 # check if person is in squat position
-                connections = mp.solutions.pose.POSE_CONNECTIONS
-                if pose_landmarks is not None and holistic_landmarks is not None:
-                    l_hip_idx = mp.solutions.pose.PoseLandmark.LEFT_HIP.value
-                    l_knee_idx = mp.solutions.pose.PoseLandmark.LEFT_KNEE.value
-                    if pose_landmarks.landmark[l_hip_idx].visibility > 0 and pose_landmarks.landmark[l_knee_idx].visibility > 0:
-                        if (l_hip_idx, l_knee_idx) in connections and l_hip_z > l_knee_z:
-                            if not self.in_squat:
-                                self.in_squat = True
-                                if self.prev_l_hip_y is not None and l_hip_y < self.prev_l_hip_y:
-                                    self.squat_count += 1
-                                    self.ids.squat_label.text = f"Squat count: {self.squat_count}"
-                                    print(f"Squat count: {self.squat_count}")
-                            self.prev_l_hip_y = l_hip_y
-                        else:
-                            self.in_squat = False
+                if left_leg_angle < 100 and right_leg_angle < 100:
+                    self.position = "DOWN"
 
-                # display landmarks
-                for lm in pose_landmarks.landmark:
-                    x, y = int(lm.x * frame.shape[1]), int(lm.y * frame.shape[0])
-                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
+                if left_leg_angle > 135 and right_leg_angle > 135:
+                    self.position = "UP"
 
+                # ["DOWN", "UP"] = 1 repetition
+                if self.position == 'DOWN':
+                    if self.rep[0] == 0:
+                        self.rep[0] = 'DOWN'
+
+                if self.position == 'UP':
+                    if self.rep == ['DOWN', 0]:
+                        self.counter += 1
+                        print(f"Squat count: {self.counter}")
+                        rep = [0, 0]  # reset repetition
+            except:
+                pass
+            # display landmarks
+            mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,                                      # connection appearance
+                                      mp_drawing.DrawingSpec(color=(255, 200, 0), thickness=2, circle_radius=2),
+                                      mp_drawing.DrawingSpec( color=(0, 255, 255), thickness=5, circle_radius=2)  # joint appearance
+                                      )
+            if success:
                 # display frame
-                buf = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                buf = buf.tostring()
-                texture = Texture.create(
-                    size=(frame.shape[1], frame.shape[0]), colorfmt='rgb')
-                texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
-                self.ids.image.texture = texture
+                # Update Kivy texture
+                buffer = image.tobytes()
+                self.texture.blit_buffer(
+                    buffer, colorfmt='bgr', bufferfmt='ubyte')
+                self.ids.image.texture = self.texture
 
-class ScreenManagement(ScreenManager): # Manages all the pages
+
+class ScreenManagement(ScreenManager):  # Manages all the pages
     pass
 
 
 class MyApp(MDApp):
     def build(self):
-        self.theme_cls.theme_style = "Dark" # Background Dark
-        self.theme_cls.primary_palette = "DeepPurple" # Details Purple 
-        sm = ScreenManagement() # define ScreenManager as 'sm'
+        self.theme_cls.theme_style = "Dark"  # Background Dark
+        self.theme_cls.primary_palette = "DeepPurple"  # Details Purple
+        sm = ScreenManagement()  # define ScreenManager as 'sm'
         sm.add_widget(MainPage(name='main'))
         sm.add_widget(PageOne(name='page_one'))
         sm.add_widget(PageTwo(name='page_two'))
         sm.add_widget(PageThree(name='page_three'))
-        sm.add_widget(Result(name='result'))
         return sm
 
 
