@@ -4,7 +4,6 @@
     PageOne:
     PageTwo:
     PageThree:
-    Result:
 
 <MainPage>: # Initial Page
     name: 'main'
@@ -15,19 +14,19 @@
             halign: 'center'
             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
         MDRectangleFlatButton:
-            text: 'Page 1'
+            text: 'Push-Ups'
             pos_hint: {'center_x': 0.2, 'center_y': 0.08} # Button1 position
             on_press: 
                 root.manager.current = 'page_one'
                 root.manager.transition.direction = "left" # direction of the window slide
         MDRectangleFlatButton:
-            text: 'Page 2'
+            text: 'Squats'
             pos_hint: {'center_x': 0.5, 'center_y': 0.08} # Button2 position
             on_press: 
                 root.manager.current = 'page_two'
                 root.manager.transition.direction = "left" # direction of the window slide
         MDRectangleFlatButton:
-            text: 'Page 3'
+            text: 'Sit Ups'
             pos_hint: {'center_x': 0.8, 'center_y': 0.08} # Button3 position
             on_press: 
                 root.manager.current = 'page_three'
@@ -36,62 +35,15 @@
 
 <PageOne>:
     name: 'page_one'
-    num_one: num_one
-    num_two: num_two
-    MDScreen:
-        md_bg_color: app.theme_cls.bg_dark
-        MDLabel:
-            text: 'Enter two numbers to multiply:'
-            halign: 'center'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.8}
-        MDTextField:
-            id: num_one
-            hint_text: 'Number 1'
-            helper_text_mode: 'on_focus'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.6}
-            size_hint_x: None
-            width: 200
-        MDTextField:
-            id: num_two
-            hint_text: 'Number 2'
-            helper_text_mode: 'on_focus'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            size_hint_x: None
-            width: 200
-        MDRectangleFlatButton:
-            text: 'Calculate'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.4}
-            on_press: root.calculate()            
-
-        MDFloatingActionButton:
-            icon: "arrow-left"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
-            on_release:
-                app.root.current = 'main'
-                root.manager.transition.direction = "right" # direction of the window slide
-<Result>:
-    name: 'result'
-    result_label: result_label
-    MDScreen:
-        md_bg_color: app.theme_cls.bg_dark
-        MDLabel:
-            id: result_label
-            halign: 'center'
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-        MDFloatingActionButton:
-            icon: "arrow-left"
-            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
-            on_release:
-                app.root.current = 'main'
-                root.manager.transition.direction = "right" # direction of the window slide
-
-
-<PageTwo>:
-    name: 'page_two'
     BoxLayout:
         orientation: 'vertical'
         MDTopAppBar:
             title: "Camera"
+        MDLabel:
+            id: squat_label
+            text: "Push Ups counter: 0"
+            size_hint_y: 0.1
+            font_size: "30sp"
         Image:
             id: image
             size_hint_y: 0.8
@@ -103,6 +55,28 @@
                 root.manager.transition.direction = "right" # direction of the window slide
 
 
+
+<PageTwo>:
+    name: 'page_two'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Camera"
+        MDLabel:
+            id: squat_label
+            text: "Squats counter: 0"
+            size_hint_y: 0.1
+            font_size: "30sp"
+        Image:
+            id: image
+            size_hint_y: 0.8
+        MDFloatingActionButton:
+            icon: "arrow-left"
+            pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+            on_release:
+                app.root.current = 'main'
+                root.manager.transition.direction = "right" # direction of the window slide
+
 <PageThree>:
     name: 'page_three'
     BoxLayout:
@@ -111,7 +85,7 @@
             title: "Camera"
         MDLabel:
             id: squat_label
-            text: "Squat count: 0"
+            text: "Sit Ups counter: 0"
             size_hint_y: 0.1
             font_size: "30sp"
         Image:
